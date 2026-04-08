@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Liver Health Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --primary-dark: #b45309;
+            --primary-glow: rgba(245, 158, 11, 0.15);
+            --accent: #ef4444;
+            --secondary: #1c1917;
+            --muted: #78716c;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #fffbeb;
+            --bg2: #fef3c7;
+            --white: #ffffff;
+            --border: #fde68a;
+            --card-shadow: 0 4px 32px rgba(245, 158, 11, 0.10);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg);
+            color: var(--secondary);
+            min-height: 100vh;
+        }
+
+        nav {
+            background: var(--white);
+            padding: 1rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(245,158,11,0.07);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(245,158,11,0.35);
+        }
+
+        .nav-badge {
+            font-size: 0.72rem;
+            font-family: 'DM Mono', monospace;
+            background: var(--bg2);
+            color: var(--primary-dark);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 440px 1fr;
+            gap: 28px;
+            max-width: 1400px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        .prediction-card {
+            background: var(--white);
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+            height: fit-content;
+            position: sticky;
+            top: 88px;
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--secondary);
+            letter-spacing: -0.3px;
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .form-section-label {
+            font-size: 0.7rem;
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--primary-dark);
+            margin: 18px 0 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--bg2);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .full-width { grid-column: span 2; }
+
+        input, select {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            font-size: 13px;
+            font-family: 'Sora', sans-serif;
+            width: 100%;
+            background: var(--bg);
+            color: var(--secondary);
+            transition: border 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: var(--white);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        label span {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 400;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        button {
+            margin-top: 18px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+            letter-spacing: 0.2px;
+        }
+
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,0.45); }
+        button:active { transform: translateY(0); }
+
+        #result {
+            margin-top: 16px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+
+        .healthy { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; display: block; }
+        .risk { background: #ffe4e6; color: #9f1239; border: 1.5px solid #fda4af; display: block; }
+
+        .result-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        .result-confidence { font-family: 'DM Mono', monospace; font-size: 0.78rem; margin-top: 4px; opacity: 0.75; }
+
+        .info-section {
+            background: var(--white);
+            padding: 36px 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+        }
+
+        .info-hero h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--secondary);
+            line-height: 1.2;
+        }
+
+        .info-hero h1 span { color: var(--primary-dark); }
+
+        .info-hero p {
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin-top: 10px;
+            line-height: 1.6;
+            max-width: 560px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin: 24px 0;
+        }
+
+        .stat-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+
+        .section-title {
+            font-size: 0.72rem;
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary-dark);
+            margin: 32px 0 14px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid var(--bg2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px; height: 14px;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 2px;
+            display: inline-block;
+        }
+
+        .info-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .info-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 3px 0 0 3px;
+        }
+
+        .info-card:hover { box-shadow: 0 4px 20px rgba(245,158,11,0.14); border-color: var(--primary); }
+        .info-card.full { grid-column: span 2; }
+
+        .term { font-weight: 700; color: var(--secondary); font-size: 0.95rem; margin-bottom: 2px; }
+        .meaning { display: block; font-size: 0.78rem; color: var(--primary-dark); font-style: italic; margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+        .details { font-size: 0.85rem; line-height: 1.55; color: #57534e; }
+
+        .badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-family: 'DM Mono', monospace; font-weight: 500; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-yellow { background: #fef9c3; color: #713f12; }
+        .badge-red { background: #ffe4e6; color: #9f1239; }
+
+        .callout {
+            background: linear-gradient(135deg, var(--primary-glow), rgba(239,68,68,0.06));
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-top: 24px;
+        }
+
+        .callout h4 { color: var(--primary-dark); font-size: 0.9rem; margin-bottom: 10px; }
+
+        .callout ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px; }
+        .callout ul li { font-size: 0.83rem; color: #44403c; display: flex; align-items: center; gap: 6px; }
+        .callout ul li::before { content: '→'; color: var(--primary-dark); font-weight: 700; }
+
+        .disclaimer {
+            margin-top: 28px;
+            padding: 14px 18px;
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #713f12;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+            .prediction-card { position: relative; top: 0; }
+        }
+
+        @media (max-width: 640px) {
+            .info-cards-grid { grid-template-columns: 1fr; }
+            .info-card.full { grid-column: span 1; }
+            .callout ul { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr; }
+            .info-section { padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <div class="logo-icon">🫀</div>
+        Liver Health Dashboard
+    </div>
+    
+</nav>
+
+<div class="dashboard-container">
+
+    <!-- PREDICTION CARD -->
+    <div class="prediction-card">
+        <div class="card-header">
+            <h2>Risk Analysis</h2>
+        </div>
+        <p class="card-subtitle">Enter patient data below for instant AI-powered liver disease prediction.</p>
+
+        <div class="form-section-label">Demographics</div>
+        <div class="grid">
+            <label>
+                <span>Age (years)</span>
+                <input id="age" type="number" placeholder="e.g. 45" min="1" max="120">
+            </label>
+            <label>
+                <span>Gender</span>
+                <select id="gender">
+                    <option value="">Select</option>
+                    <option value="1">Male</option>
+                    <option value="0">Female</option>
+                </select>
+            </label>
+            <label>
+                <span>BMI</span>
+                <input id="bmi" type="number" step="0.01" placeholder="e.g. 24.5" min="10" max="60">
+            </label>
+        </div>
+
+        <div class="form-section-label">Lifestyle Factors</div>
+        <div class="grid">
+            <label>
+                <span>Alcohol Consumption (units/week)</span>
+                <input id="alcohol" type="number" step="0.1" placeholder="e.g. 5.0" min="0" max="50">
+            </label>
+            <label>
+                <span>Smoking</span>
+                <select id="smoking">
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </label>
+            <label class="full-width">
+                <span>Physical Activity (hrs/week)</span>
+                <input id="physical_activity" type="number" step="0.1" placeholder="e.g. 3.5" min="0" max="30">
+            </label>
+        </div>
+
+        <div class="form-section-label">Genetic & Medical History</div>
+        <div class="grid">
+            <label>
+                <span>Genetic Risk</span>
+                <select id="genetic_risk">
+                    <option value="">Select</option>
+                    <option value="0">Low (0)</option>
+                    <option value="1">Medium (1)</option>
+                    <option value="2">High (2)</option>
+                </select>
+            </label>
+            <label>
+                <span>Diabetes</span>
+                <select id="diabetes">
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Hypertension</span>
+                <select id="hypertension">
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="form-section-label">Lab Results</div>
+        <div class="grid">
+            <label class="full-width">
+                <span>Liver Function Test Score</span>
+                <input id="liver_function" type="number" step="0.01" placeholder="e.g. 45.5" min="0" max="150">
+            </label>
+        </div>
+
+        <button onclick="predict()">🔍 Run AI Diagnostics</button>
+        <div id="result"></div>
+    </div>
+
+    <!-- INFO SECTION -->
+    <div class="info-section">
+        <div class="info-hero">
+            <h1>Understanding <span>Liver Disease</span><br>Risk Parameters</h1>
+            <p>This guide explains each clinical and lifestyle metric used by the AI model to evaluate your risk of Liver Disease. Knowledge of these factors empowers better health decisions.</p>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-num">~2M</div>
+                <div class="stat-label">Liver disease deaths/year globally</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">40%</div>
+                <div class="stat-label">Cases linked to alcohol use</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">80%</div>
+                <div class="stat-label">Preventable with lifestyle changes</div>
+            </div>
+        </div>
+
+        <div class="section-title">Demographics</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Age</div>
+                <span class="meaning">Primary demographic risk factor</span>
+                <p class="details">Liver disease risk accumulates over time. Older adults face higher risk due to years of cumulative exposure to toxins, alcohol, medications, and metabolic stress. The liver's regenerative capacity also declines after age 50.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Lower risk: &lt;40</span>
+                    <span class="badge badge-yellow">Moderate: 40–65</span>
+                    <span class="badge badge-red">Higher risk: 65+</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Gender</div>
+                <span class="meaning">Biological sex at birth</span>
+                <p class="details">Men have a statistically higher prevalence of liver disease, partly due to higher alcohol consumption rates and greater muscle mass (affecting enzyme baselines). However, women are more susceptible to alcohol-induced liver damage at lower doses due to differences in metabolism.</p>
+            </div>
+            <div class="info-card full">
+                <div class="term">BMI (Body Mass Index)</div>
+                <span class="meaning">Weight-to-height ratio indicator</span>
+                <p class="details">BMI is a strong predictor of Non-Alcoholic Fatty Liver Disease (NAFLD), the fastest-growing liver disease globally. Excess fat, especially visceral (abdominal) fat, deposits directly in liver cells, causing inflammation (steatohepatitis) and eventually fibrosis or cirrhosis. Even a BMI of 25–30 can trigger early fatty liver changes.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Normal: 18.5–24.9</span>
+                    <span class="badge badge-yellow">Overweight: 25–29.9</span>
+                    <span class="badge badge-red">Obese: 30+</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Lifestyle Factors</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Alcohol Consumption</div>
+                <span class="meaning">Weekly alcohol intake in standard units</span>
+                <p class="details">Alcohol is directly hepatotoxic — it is metabolized almost entirely in the liver. Chronic heavy use causes a well-defined progression: fatty liver → alcoholic hepatitis → cirrhosis → liver failure. Even moderate regular drinking elevates risk markers over years. Safe limit is generally &lt;14 units/week.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Safe: &lt;7 units/week</span>
+                    <span class="badge badge-yellow">Moderate risk: 7–14</span>
+                    <span class="badge badge-red">High risk: &gt;14</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Smoking</div>
+                <span class="meaning">Current tobacco use status</span>
+                <p class="details">Smoking exacerbates liver disease by increasing oxidative stress and inflammation, impairing the liver's detoxification capacity. Smokers with existing liver conditions face significantly faster disease progression. It is also strongly associated with hepatocellular carcinoma (liver cancer).</p>
+            </div>
+            <div class="info-card full">
+                <div class="term">Physical Activity</div>
+                <span class="meaning">Weekly hours of exercise</span>
+                <p class="details">Regular physical activity is one of the most powerful protective factors for the liver. Exercise directly reduces hepatic fat content, improves insulin sensitivity, lowers systemic inflammation, and helps maintain a healthy BMI. Studies show even 150 minutes/week of moderate activity can reduce liver fat by up to 30% in NAFLD patients. Sedentary individuals have up to 2× the risk of progressing to non-alcoholic steatohepatitis (NASH).</p>
+                <div class="badge-row">
+                    <span class="badge badge-red">Sedentary: &lt;1.5 hrs/week</span>
+                    <span class="badge badge-yellow">Light: 1.5–3 hrs/week</span>
+                    <span class="badge badge-green">Active: &gt;3 hrs/week</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Genetic & Medical History</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Genetic Risk</div>
+                <span class="meaning">Hereditary predisposition level (0–2)</span>
+                <p class="details">Genetic variants such as PNPLA3, TM6SF2, and MBOAT7 significantly increase susceptibility to fatty liver disease and liver fibrosis regardless of lifestyle. Individuals with first-degree relatives who had liver disease carry a markedly higher baseline risk. This model encodes genetic risk on a 0–2 scale (low/medium/high).</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Low (0) — Minimal hereditary risk</span>
+                    <span class="badge badge-yellow">Medium (1) — Some predisposition</span>
+                    <span class="badge badge-red">High (2) — Strong family history</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Diabetes</div>
+                <span class="meaning">Type 1 or Type 2 diabetes diagnosis</span>
+                <p class="details">Diabetes is a major independent risk factor for NAFLD and NASH. Insulin resistance — the hallmark of Type 2 diabetes — drives excess fat accumulation in liver cells. Diabetics are 2–3× more likely to develop advanced liver fibrosis and are at significantly elevated risk for liver cancer.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">No Diabetes — Lower risk</span>
+                    <span class="badge badge-red">Diabetic — Elevated risk</span>
+                </div>
+            </div>
+            <div class="info-card full">
+                <div class="term">Hypertension</div>
+                <span class="meaning">High blood pressure diagnosis</span>
+                <p class="details">Hypertension frequently co-occurs with liver disease as part of metabolic syndrome. High blood pressure damages portal blood vessels leading to the liver, increases fibrosis progression, and is closely linked with NAFLD. The combination of hypertension, diabetes, and obesity is considered a "triple threat" for liver disease and is heavily weighted by the model.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Normal (&lt;120/80 mmHg)</span>
+                    <span class="badge badge-red">Hypertensive (≥130/80 mmHg)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Lab Results</div>
+        <div class="info-cards-grid">
+            <div class="info-card full">
+                <div class="term">Liver Function Test (LFT) Score</div>
+                <span class="meaning">Composite marker of hepatic health</span>
+                <p class="details">The Liver Function Test score is a composite clinical marker reflecting the liver's current functional state. It incorporates measures like ALT, AST, bilirubin, albumin, and ALP. Elevated scores indicate hepatocellular damage, bile duct obstruction, or impaired synthetic function. This is the model's most direct biochemical indicator and is weighted heavily in predicting diagnosis. Scores above 45–50 in this dataset correlate with elevated disease risk.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Healthy: &lt;35</span>
+                    <span class="badge badge-yellow">Borderline: 35–50</span>
+                    <span class="badge badge-red">Elevated: &gt;50</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout">
+            <h4>⚠️ High-Risk Combinations to Watch</h4>
+            <ul>
+                <li>Diabetes + High BMI</li>
+                <li>Alcohol + Smoking</li>
+                <li>High Genetic Risk + Alcohol</li>
+                <li>Hypertension + Diabetes</li>
+                <li>Sedentary + Obese (BMI 30+)</li>
+                <li>Elevated LFT + Alcohol Use</li>
+            </ul>
+        </div>
+
+        <div class="disclaimer">
+            ⚠️ <strong>Medical Disclaimer:</strong> This tool is for educational and informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified hepatologist or gastroenterologist for any health concerns.
+        </div>
+    </div>
+</div>
+
+<script>
+    function predict() {
+        const resultDiv = document.getElementById('result');
+
+        const fields = {
+            age: document.getElementById('age').value,
+            gender: document.getElementById('gender').value,
+            bmi: document.getElementById('bmi').value,
+            alcohol: document.getElementById('alcohol').value,
+            smoking: document.getElementById('smoking').value,
+            physical_activity: document.getElementById('physical_activity').value,
+            genetic_risk: document.getElementById('genetic_risk').value,
+            diabetes: document.getElementById('diabetes').value,
+            hypertension: document.getElementById('hypertension').value,
+            liver_function: document.getElementById('liver_function').value,
+        };
+
+        for (const [key, val] of Object.entries(fields)) {
+            if (val === '' || val === null) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'risk';
+                resultDiv.innerHTML = `<span class="result-icon">⚠️</span>Please fill in all fields before running diagnostics.`;
+                return;
+            }
+        }
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = '';
+        resultDiv.innerHTML = `<span class="result-icon">⏳</span>Analyzing data...`;
+
+        fetch("/predict_liver", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields)
+        })
+        .then(res => res.json())
+        .then(data => {
+            const isRisk = data.prediction === 1 || String(data.prediction).toLowerCase().includes("yes");
+            resultDiv.className = isRisk ? 'risk' : 'healthy';
+            resultDiv.innerHTML = isRisk
+                ? `<span class="result-icon">🔴</span><strong>High Risk Detected</strong><br>Liver disease risk identified. Please consult a hepatologist.<div class="result-confidence">Confidence: ${data.confidence}%</div>`
+                : `<span class="result-icon">🟢</span><strong>Low Risk</strong><br>No significant liver disease risk detected at this time.<div class="result-confidence">Confidence: ${data.confidence}%</div>`;
+        })
+        .catch(err => {
+            resultDiv.className = 'risk';
+            resultDiv.innerHTML = `<span class="result-icon">❌</span>Error connecting to server. Make sure the Flask backend is running.`;
+            console.error(err);
+        });
+    }
+</script>
+
+</body>
+</html>

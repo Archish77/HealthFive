@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VitalSense — Intelligent Health Diagnostics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050a12;
+      --bg2: #0a1220;
+      --surface: #0f1c2e;
+      --surface2: #162336;
+      --border: rgba(100,180,255,0.1);
+      --accent: #38b6ff;
+      --accent2: #00e5c5;
+      --accent3: #ff6b8a;
+      --accent4: #a78bfa;
+      --text: #e8f1ff;
+      --muted: #6b8aaa;
+      --heart: #ff6b8a;
+      --lung: #38b6ff;
+      --kidney: #a78bfa;
+      --liver: #fbbf24;
+      --brain: #00e5c5;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 3rem;
+      height: 68px;
+      background: rgba(5,10,18,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem; font-weight: 700;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex; gap: 0.25rem; list-style: none;
+    }
+
+    .nav-links a {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem; font-weight: 500; letter-spacing: 0.03em;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-links a .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0; transition: transform 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); background: var(--surface); }
+    .nav-links a:hover .dot { transform: scale(1.4); }
+    .nav-links a[data-organ="heart"] .dot { background: var(--heart); }
+    .nav-links a[data-organ="lung"] .dot  { background: var(--lung); }
+    .nav-links a[data-organ="kidney"] .dot{ background: var(--kidney); }
+    .nav-links a[data-organ="liver"] .dot { background: var(--liver); }
+    .nav-links a[data-organ="brain"] .dot { background: var(--brain); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 120px 3rem 80px;
+      overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute;
+      border-radius: 50%; filter: blur(120px); pointer-events: none;
+    }
+    .glow-1 { width: 500px; height: 500px; background: rgba(56,182,255,0.08); top: -100px; left: -100px; }
+    .glow-2 { width: 400px; height: 400px; background: rgba(0,229,197,0.06); bottom: 0; right: 200px; }
+    .glow-3 { width: 300px; height: 300px; background: rgba(167,139,250,0.07); top: 200px; right: 50px; }
+
+    .hero-content { position: relative; z-index: 1; max-width: 580px; }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em;
+      color: var(--accent); font-family: 'DM Mono', monospace;
+      margin-bottom: 2rem;
+      background: rgba(56,182,255,0.05);
+    }
+
+    .hero-tag::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 5vw, 4.8rem);
+      font-weight: 600; line-height: 1.08;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.05rem; line-height: 1.75;
+      color: var(--muted); max-width: 480px; margin-bottom: 2.5rem;
+    }
+
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    .btn-primary {
+      padding: 0.75rem 2rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #050a12; font-weight: 600; font-size: 0.9rem;
+      border: none; border-radius: 8px; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-ghost {
+      padding: 0.75rem 2rem;
+      background: transparent;
+      color: var(--text); font-weight: 500; font-size: 0.9rem;
+      border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); background: rgba(56,182,255,0.05); }
+
+    /* ── HUMAN BODY DIAGRAM ── */
+    .body-section {
+      position: relative; z-index: 1;
+      padding: 6rem 3rem;
+      text-align: center;
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.14em;
+      color: var(--accent); text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 600; margin-bottom: 1rem;
+    }
+
+    .section-sub {
+      color: var(--muted); font-size: 1rem; line-height: 1.7;
+      max-width: 540px; margin: 0 auto 4rem;
+    }
+
+    .body-diagram-wrapper {
+      position: relative; display: inline-block;
+      max-width: 800px; width: 100%;
+    }
+
+    /* SVG BODY */
+    .body-svg-container {
+      position: relative;
+      display: flex; justify-content: center; align-items: flex-start;
+    }
+
+    .human-body-svg {
+      width: 320px; height: 580px;
+      filter: drop-shadow(0 0 40px rgba(56,182,255,0.12));
+    }
+
+    /* ── TOOLTIP ── */
+    .organ-tooltip {
+      position: fixed;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      max-width: 220px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 200;
+      backdrop-filter: blur(12px);
+    }
+
+    .organ-tooltip.visible { opacity: 1; transform: translateY(0); }
+
+    .organ-tooltip .tt-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+
+    .organ-tooltip .tt-desc {
+      font-size: 0.78rem; line-height: 1.55; color: var(--muted);
+    }
+
+    .organ-tooltip .tt-cta {
+      margin-top: 0.6rem;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── STATS BAND ── */
+    .stats-band {
+      position: relative; z-index: 1;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      margin: 0 3rem;
+    }
+
+    .stat-item {
+      padding: 2.5rem 2rem;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem; font-weight: 700; line-height: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; letter-spacing: 0.05em; }
+
+    /* ── ORGAN CARDS ── */
+    .organs-section {
+      position: relative; z-index: 1;
+      padding: 6rem 3rem;
+    }
+
+    .organs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem; margin-top: 3rem;
+    }
+
+    .organ-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      text-decoration: none; color: var(--text);
+      position: relative; overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s, background 0.25s;
+      display: block;
+    }
+
+    .organ-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      transition: opacity 0.25s;
+    }
+
+    .organ-card[data-organ="heart"]::before  { background: var(--heart); }
+    .organ-card[data-organ="lung"]::before   { background: var(--lung); }
+    .organ-card[data-organ="kidney"]::before { background: var(--kidney); }
+    .organ-card[data-organ="liver"]::before  { background: var(--liver); }
+    .organ-card[data-organ="brain"]::before  { background: var(--brain); }
+
+    .organ-card:hover { transform: translateY(-4px); background: var(--surface2); }
+    .organ-card[data-organ="heart"]:hover  { border-color: var(--heart); }
+    .organ-card[data-organ="lung"]:hover   { border-color: var(--lung); }
+    .organ-card[data-organ="kidney"]:hover { border-color: var(--kidney); }
+    .organ-card[data-organ="liver"]:hover  { border-color: var(--liver); }
+    .organ-card[data-organ="brain"]:hover  { border-color: var(--brain); }
+
+    .card-icon {
+      font-size: 2.5rem; margin-bottom: 1.25rem; display: block;
+    }
+
+    .card-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-desc {
+      font-size: 0.85rem; line-height: 1.65; color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .card-action {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
+      font-family: 'DM Mono', monospace;
+      transition: gap 0.2s;
+    }
+
+    .organ-card[data-organ="heart"] .card-action  { color: var(--heart); }
+    .organ-card[data-organ="lung"]  .card-action  { color: var(--lung); }
+    .organ-card[data-organ="kidney"] .card-action { color: var(--kidney); }
+    .organ-card[data-organ="liver"] .card-action  { color: var(--liver); }
+    .organ-card[data-organ="brain"] .card-action  { color: var(--brain); }
+
+    .organ-card:hover .card-action { gap: 0.7rem; }
+
+    /* ── WHY SECTION ── */
+    .why-section {
+      position: relative; z-index: 1;
+      padding: 6rem 3rem;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem; align-items: center;
+      margin-top: 3rem;
+    }
+
+    .why-text h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem; font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+
+    .why-text p {
+      font-size: 0.95rem; line-height: 1.8; color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .feature-list { list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .feature-list li {
+      display: flex; gap: 0.75rem; align-items: flex-start;
+      font-size: 0.88rem; line-height: 1.6;
+    }
+
+    .feature-list li::before {
+      content: '→';
+      color: var(--accent2); font-family: 'DM Mono', monospace;
+      flex-shrink: 0; margin-top: 0.05rem;
+    }
+
+    .why-visual {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    .vitals-row {
+      display: flex; align-items: center; gap: 1rem;
+      background: var(--surface2);
+      border-radius: 10px; padding: 0.9rem 1.1rem;
+    }
+
+    .vital-icon { font-size: 1.4rem; }
+
+    .vital-info { flex: 1; }
+
+    .vital-name { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.04em; }
+
+    .vital-val { font-family: 'DM Mono', monospace; font-size: 1.05rem; font-weight: 500; }
+
+    .vital-bar { height: 3px; background: var(--surface); border-radius: 2px; margin-top: 0.4rem; overflow: hidden; }
+    .vital-fill { height: 100%; border-radius: 2px; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      padding: 3rem;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .footer-note { font-size: 0.8rem; color: var(--muted); }
+
+    /* ── ANIMATIONS ── */
+    .fade-in {
+      opacity: 0; transform: translateY(24px);
+      animation: fadeUp 0.7s ease forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in:nth-child(1) { animation-delay: 0.1s; }
+    .fade-in:nth-child(2) { animation-delay: 0.2s; }
+    .fade-in:nth-child(3) { animation-delay: 0.3s; }
+    .fade-in:nth-child(4) { animation-delay: 0.4s; }
+    .fade-in:nth-child(5) { animation-delay: 0.5s; }
+
+    /* EKG line decor */
+    .ekg-line {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 60px; pointer-events: none; overflow: hidden;
+    }
+
+    .ekg-line svg { width: 200%; animation: scroll-ekg 4s linear infinite; }
+
+    @keyframes scroll-ekg {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 1.25rem; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 1.5rem 60px; }
+      .body-section, .organs-section, .why-section { padding: 4rem 1.5rem; }
+      .stats-band { margin: 0 1.5rem; }
+      .why-grid { grid-template-columns: 1fr; }
+      footer { padding: 2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="index_home.html">HealthFive</a>
+    <ul class="nav-links">
+      <li><a href="index_heart.html" data-organ="heart"><span class="dot"></span>Heart</a></li>
+      <li><a href="index_lung.html"  data-organ="lung"><span class="dot"></span>Lungs</a></li>
+      <li><a href="index_kidney.html" data-organ="kidney"><span class="dot"></span>Kidney</a></li>
+      <li><a href="index_liver.html" data-organ="liver"><span class="dot"></span>Liver</a></li>
+      <li><a href="index_brain.html" data-organ="brain"><span class="dot"></span>Brain</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow glow-1"></div>
+    <div class="hero-glow glow-2"></div>
+    <div class="hero-glow glow-3"></div>
+
+    <div class="hero-content">
+      <div class="hero-tag fade-in">AI-POWERED DIAGNOSTICS</div>
+      <h1 class="fade-in">Predict disease.<br/><em>Before it strikes.</em></h1>
+      <p class="fade-in">VitalSense uses machine learning to assess risk across your body's five most vital organs — heart, lungs, kidneys, liver, and brain — giving you actionable insight in seconds.</p>
+      <div class="hero-btns fade-in">
+        <a href="#organs" class="btn-primary">Explore Diagnostics</a>
+        <a href="#diagram" class="btn-ghost">View Body Map</a>
+      </div>
+    </div>
+
+    <!-- EKG decor line -->
+    <div class="ekg-line">
+      <svg viewBox="0 0 1000 60" fill="none" xmlns="http://www.w3.org/2000/svg" height="60">
+        <polyline points="0,30 80,30 100,30 110,5 120,55 130,5 140,55 150,30 160,30 300,30 320,30 330,10 340,50 350,10 360,50 370,30 380,30 500,30 520,30 530,5 540,55 550,5 560,55 570,30 580,30 700,30 720,30 730,10 740,50 750,10 760,50 770,30 780,30 900,30 920,30 930,5 940,55 950,5 960,55 970,30 980,30 1000,30"
+          stroke="rgba(56,182,255,0.18)" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-band">
+    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">Vital Organs Monitored</div></div>
+    <div class="stat-item"><div class="stat-num">97%</div><div class="stat-label">Model Accuracy</div></div>
+    <div class="stat-item"><div class="stat-num">&lt;2s</div><div class="stat-label">Prediction Time</div></div>
+    <div class="stat-item"><div class="stat-num">ML</div><div class="stat-label">Powered by AI</div></div>
+  </div>
+
+  <!-- BODY DIAGRAM -->
+  <section class="body-section" id="diagram">
+    <div class="section-label">Interactive Body Map</div>
+    <h2 class="section-title">Click an organ to diagnose</h2>
+    <p class="section-sub">Select any highlighted organ on the anatomical diagram below to navigate to its dedicated diagnostic tool.</p>
+
+    <div class="body-diagram-wrapper" style="max-width:900px; margin:0 auto;">
+      <svg id="bioSvg" width="100%" viewBox="0 0 900 780" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+        <defs>
+          <style>
+            @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.08)} 28%{transform:scale(1)} 42%{transform:scale(1.05)} 56%{transform:scale(1)} }
+            @keyframes breathe { 0%,100%{transform:scaleY(1) scaleX(1)} 50%{transform:scaleY(1.04) scaleX(1.02)} }
+            @keyframes brainPulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
+            @keyframes kidneyFlow { 0%,100%{opacity:0.6} 50%{opacity:0.95} }
+            @keyframes liverGlow { 0%,100%{opacity:0.75} 50%{opacity:1} }
+            @keyframes labelPop { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+            .organ-clickable { cursor:pointer; }
+            .organ-clickable:hover .organ-shape { filter:brightness(1.25); }
+            #heart-group { transform-origin:450px 310px; animation: heartbeat 1.4s ease-in-out infinite; }
+            #lung-left-group { transform-origin:415px 320px; animation: breathe 3.5s ease-in-out infinite; }
+            #lung-right-group { transform-origin:485px 320px; animation: breathe 3.5s ease-in-out infinite; }
+            #brain-group { transform-origin:450px 115px; animation: brainPulse 2.8s ease-in-out infinite; }
+            #kidney-left-group { transform-origin:418px 430px; animation: kidneyFlow 3.2s ease-in-out infinite; }
+            #kidney-right-group { transform-origin:482px 430px; animation: kidneyFlow 3.2s ease-in-out infinite 0.4s; }
+            #liver-group { transform-origin:468px 395px; animation: liverGlow 4s ease-in-out infinite; }
+          </style>
+          <filter id="organGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <radialGradient id="skinGrad" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#1e3a5f"/>
+            <stop offset="100%" stop-color="#0d1f35"/>
+          </radialGradient>
+          <radialGradient id="heartGrad" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#ff8fa8"/>
+            <stop offset="50%" stop-color="#e8365d"/>
+            <stop offset="100%" stop-color="#a0142c"/>
+          </radialGradient>
+          <radialGradient id="lungGrad" cx="40%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#7fd4ff"/>
+            <stop offset="55%" stop-color="#2a8fcb"/>
+            <stop offset="100%" stop-color="#0d4f80"/>
+          </radialGradient>
+          <radialGradient id="brainGrad" cx="45%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="#7fffe4"/>
+            <stop offset="50%" stop-color="#00b894"/>
+            <stop offset="100%" stop-color="#006d55"/>
+          </radialGradient>
+          <radialGradient id="liverGrad" cx="35%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#ffe066"/>
+            <stop offset="50%" stop-color="#d4900a"/>
+            <stop offset="100%" stop-color="#7c5000"/>
+          </radialGradient>
+          <radialGradient id="kidneyGrad" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#d4b3ff"/>
+            <stop offset="50%" stop-color="#8855d4"/>
+            <stop offset="100%" stop-color="#4a1f8f"/>
+          </radialGradient>
+          <linearGradient id="ribGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(56,182,255,0.06)"/>
+            <stop offset="50%" stop-color="rgba(56,182,255,0.14)"/>
+            <stop offset="100%" stop-color="rgba(56,182,255,0.06)"/>
+          </linearGradient>
+          <clipPath id="torsoClip">
+            <path d="M380 230 Q350 235 340 260 L330 450 Q328 475 345 482 L455 482 Q472 475 470 450 L460 260 Q450 235 420 230 Z"/>
+          </clipPath>
+        </defs>
+
+        <!-- ═══ BODY SILHOUETTE ═══ -->
+        <!-- Head -->
+        <ellipse cx="450" cy="112" rx="56" ry="62" fill="url(#skinGrad)" stroke="rgba(56,182,255,0.18)" stroke-width="1.2"/>
+        <!-- Ear left -->
+        <ellipse cx="394" cy="118" rx="9" ry="14" fill="#132840" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+        <!-- Ear right -->
+        <ellipse cx="506" cy="118" rx="9" ry="14" fill="#132840" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+        <!-- Neck -->
+        <path d="M430 170 Q428 185 428 196 L472 196 Q472 185 470 170 Z" fill="#122538" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+        <!-- Clavicle / shoulder base -->
+        <path d="M330 220 Q390 210 450 212 Q510 210 570 220 Q560 235 450 238 Q340 235 330 220Z" fill="#132a44" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+        <!-- Torso main -->
+        <path d="M345 230 Q320 242 318 290 L318 480 Q318 500 340 505 L560 505 Q582 500 582 480 L582 290 Q580 242 555 230 Q510 224 450 224 Q390 224 345 230Z" fill="url(#skinGrad)" stroke="rgba(56,182,255,0.15)" stroke-width="1.2"/>
+        <!-- Left arm -->
+        <path d="M320 242 Q298 260 290 320 Q284 370 284 410 Q283 430 292 438 Q302 445 314 438 Q325 430 326 405 Q330 365 334 310 Q340 265 345 242 Z" fill="#112336" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+        <!-- Right arm -->
+        <path d="M580 242 Q602 260 610 320 Q616 370 616 410 Q617 430 608 438 Q598 445 586 438 Q575 430 574 405 Q570 365 566 310 Q560 265 555 242 Z" fill="#112336" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+        <!-- Left leg -->
+        <path d="M345 500 Q334 540 330 600 Q326 650 326 690 Q326 715 338 720 Q352 725 362 718 Q374 710 374 688 Q378 650 382 600 Q388 545 392 505 Z" fill="#112336" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+        <!-- Right leg -->
+        <path d="M555 500 Q566 540 570 600 Q574 650 574 690 Q574 715 562 720 Q548 725 538 718 Q526 710 526 688 Q522 650 518 600 Q512 545 508 505 Z" fill="#112336" stroke="rgba(56,182,255,0.12)" stroke-width="1"/>
+
+        <!-- ═══ RIB CAGE SKETCH ═══ -->
+        <g fill="none" stroke-linecap="round">
+          <!-- Sternum center line -->
+          <line x1="450" y1="235" x2="450" y2="470" stroke="rgba(56,182,255,0.1)" stroke-width="1.5" stroke-dasharray="4,6"/>
+          <!-- Rib pairs — left & right curving out from sternum -->
+          <path d="M450 268 Q432 262 416 270 Q404 278 398 290" stroke="rgba(56,182,255,0.13)" stroke-width="1.2" fill="none"/>
+          <path d="M450 268 Q468 262 484 270 Q496 278 502 290" stroke="rgba(56,182,255,0.13)" stroke-width="1.2" fill="none"/>
+
+          <path d="M450 286 Q428 279 410 288 Q396 298 389 314" stroke="rgba(56,182,255,0.12)" stroke-width="1.2" fill="none"/>
+          <path d="M450 286 Q472 279 490 288 Q504 298 511 314" stroke="rgba(56,182,255,0.12)" stroke-width="1.2" fill="none"/>
+
+          <path d="M450 306 Q426 298 406 308 Q390 320 383 338" stroke="rgba(56,182,255,0.11)" stroke-width="1.1" fill="none"/>
+          <path d="M450 306 Q474 298 494 308 Q510 320 517 338" stroke="rgba(56,182,255,0.11)" stroke-width="1.1" fill="none"/>
+
+          <path d="M450 326 Q424 318 403 328 Q386 342 379 362" stroke="rgba(56,182,255,0.1)" stroke-width="1" fill="none"/>
+          <path d="M450 326 Q476 318 497 328 Q514 342 521 362" stroke="rgba(56,182,255,0.1)" stroke-width="1" fill="none"/>
+
+          <path d="M450 346 Q425 338 406 348 Q390 362 385 382" stroke="rgba(56,182,255,0.09)" stroke-width="1" fill="none"/>
+          <path d="M450 346 Q475 338 494 348 Q510 362 515 382" stroke="rgba(56,182,255,0.09)" stroke-width="1" fill="none"/>
+
+          <path d="M450 366 Q428 360 412 368 Q400 378 396 394" stroke="rgba(56,182,255,0.08)" stroke-width="0.9" fill="none"/>
+          <path d="M450 366 Q472 360 488 368 Q500 378 504 394" stroke="rgba(56,182,255,0.08)" stroke-width="0.9" fill="none"/>
+
+          <!-- Costal arch -->
+          <path d="M390 396 Q420 420 450 424 Q480 420 510 396" stroke="rgba(56,182,255,0.1)" stroke-width="1.2" fill="none"/>
+        </g>
+
+        <!-- Blood vessel / aorta hint -->
+        <path d="M450 285 Q448 340 446 380 Q444 410 442 430" stroke="rgba(220,50,80,0.18)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Vena cava hint -->
+        <path d="M454 285 Q456 340 458 380 Q460 410 462 430" stroke="rgba(50,80,200,0.12)" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+        <!-- ═══ BRAIN ═══ -->
+        <g id="brain-group" class="organ-clickable" onclick="window.location.href='index_brain.html'">
+          <!-- Cerebrum main -->
+          <ellipse class="organ-shape" cx="450" cy="108" rx="44" ry="46" fill="url(#brainGrad)" stroke="#00e5c5" stroke-width="1.2" opacity="0.92" filter="url(#organGlow)"/>
+          <!-- Brain hemisphere line -->
+          <line x1="450" y1="68" x2="450" y2="148" stroke="#00b894" stroke-width="0.8" stroke-dasharray="2,2"/>
+          <!-- Gyri folds left -->
+          <path d="M416 90 Q424 82 434 88 Q442 94 438 102 Q432 110 422 108 Q414 106 416 98 Q418 92 426 90" stroke="#00b894" stroke-width="0.9" fill="none" opacity="0.7"/>
+          <path d="M418 110 Q428 104 436 110 Q442 118 436 124 Q428 130 420 126 Q413 120 418 110" stroke="#00b894" stroke-width="0.9" fill="none" opacity="0.7"/>
+          <path d="M420 128 Q430 124 436 130 Q440 138 434 142 Q426 146 420 140 Q416 134 420 128" stroke="#00b894" stroke-width="0.8" fill="none" opacity="0.6"/>
+          <!-- Gyri folds right -->
+          <path d="M484 90 Q476 82 466 88 Q458 94 462 102 Q468 110 478 108 Q486 106 484 98 Q482 92 474 90" stroke="#00b894" stroke-width="0.9" fill="none" opacity="0.7"/>
+          <path d="M482 110 Q472 104 464 110 Q458 118 464 124 Q472 130 480 126 Q487 120 482 110" stroke="#00b894" stroke-width="0.9" fill="none" opacity="0.7"/>
+          <path d="M480 128 Q470 124 464 130 Q460 138 466 142 Q474 146 480 140 Q484 134 480 128" stroke="#00b894" stroke-width="0.8" fill="none" opacity="0.6"/>
+          <!-- Cerebellum -->
+          <ellipse cx="450" cy="152" rx="22" ry="12" fill="#00b894" opacity="0.55"/>
+          <path d="M434 152 Q442 148 450 152 Q458 148 466 152" stroke="#007d65" stroke-width="0.8" fill="none"/>
+          <!-- Brainstem -->
+          <rect x="445" y="162" width="10" height="18" rx="4" fill="#007d65" opacity="0.7"/>
+          <!-- Click label -->
+          <rect x="342" y="66" width="66" height="22" rx="6" fill="rgba(0,229,197,0.12)" stroke="rgba(0,229,197,0.35)" stroke-width="0.8"/>
+          <text x="375" y="81" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#00e5c5" letter-spacing="0.06em">BRAIN</text>
+        </g>
+
+        <!-- ═══ LUNGS ═══ -->
+        <!-- Left lung (viewer's left = body's right) -->
+        <g id="lung-left-group" class="organ-clickable" onclick="window.location.href='index_lung.html'">
+          <path class="organ-shape" d="M414 268 Q398 275 390 300 Q384 328 386 358 Q388 384 396 398 Q404 410 416 412 Q428 413 434 402 Q440 390 440 360 Q440 320 438 290 Q436 272 426 266 Z" fill="url(#lungGrad)" stroke="#38b6ff" stroke-width="1.1" opacity="0.88" filter="url(#organGlow)"/>
+          <!-- Bronchi left -->
+          <path d="M430 272 Q424 284 420 300" stroke="#7fd4ff" stroke-width="1.2" fill="none" opacity="0.7" stroke-linecap="round"/>
+          <path d="M424 295 Q414 305 408 320" stroke="#7fd4ff" stroke-width="0.9" fill="none" opacity="0.55" stroke-linecap="round"/>
+          <path d="M420 308 Q412 318 408 335" stroke="#7fd4ff" stroke-width="0.8" fill="none" opacity="0.45" stroke-linecap="round"/>
+          <path d="M420 328 Q414 338 412 352" stroke="#7fd4ff" stroke-width="0.7" fill="none" opacity="0.4" stroke-linecap="round"/>
+          <!-- Alveoli dots -->
+          <circle cx="400" cy="360" r="3.5" fill="#2a8fcb" opacity="0.6"/>
+          <circle cx="408" cy="375" r="3" fill="#2a8fcb" opacity="0.55"/>
+          <circle cx="396" cy="348" r="2.5" fill="#2a8fcb" opacity="0.5"/>
+        </g>
+        <!-- Right lung -->
+        <g id="lung-right-group" class="organ-clickable" onclick="window.location.href='index_lung.html'">
+          <path class="organ-shape" d="M486 268 Q502 275 510 300 Q516 328 514 358 Q512 384 504 398 Q496 410 484 412 Q472 413 466 402 Q460 390 460 360 Q460 320 462 290 Q464 272 474 266 Z" fill="url(#lungGrad)" stroke="#38b6ff" stroke-width="1.1" opacity="0.88" filter="url(#organGlow)"/>
+          <!-- Bronchi right -->
+          <path d="M470 272 Q476 284 480 300" stroke="#7fd4ff" stroke-width="1.2" fill="none" opacity="0.7" stroke-linecap="round"/>
+          <path d="M476 295 Q486 305 492 320" stroke="#7fd4ff" stroke-width="0.9" fill="none" opacity="0.55" stroke-linecap="round"/>
+          <path d="M480 308 Q488 318 492 335" stroke="#7fd4ff" stroke-width="0.8" fill="none" opacity="0.45" stroke-linecap="round"/>
+          <path d="M480 328 Q486 338 488 352" stroke="#7fd4ff" stroke-width="0.7" fill="none" opacity="0.4" stroke-linecap="round"/>
+          <!-- Alveoli dots -->
+          <circle cx="500" cy="360" r="3.5" fill="#2a8fcb" opacity="0.6"/>
+          <circle cx="492" cy="375" r="3" fill="#2a8fcb" opacity="0.55"/>
+          <circle cx="504" cy="348" r="2.5" fill="#2a8fcb" opacity="0.5"/>
+        </g>
+        <!-- Lung label -->
+        <g class="organ-clickable" onclick="window.location.href='index_lung.html'">
+          <rect x="580" y="298" width="68" height="22" rx="6" fill="rgba(56,182,255,0.12)" stroke="rgba(56,182,255,0.35)" stroke-width="0.8"/>
+          <text x="614" y="313" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#38b6ff" letter-spacing="0.06em">LUNGS</text>
+          <line x1="580" y1="309" x2="514" y2="330" stroke="rgba(56,182,255,0.3)" stroke-width="0.8" stroke-dasharray="3,3"/>
+        </g>
+
+        <!-- ═══ HEART ═══ -->
+        <g id="heart-group" class="organ-clickable" onclick="window.location.href='index_heart.html'">
+          <!-- Main heart shape -->
+          <path class="organ-shape" d="M450 348 Q436 328 424 322 Q408 316 400 328 Q392 342 400 358 Q410 376 430 392 Q440 400 450 408 Q460 400 470 392 Q490 376 500 358 Q508 342 500 328 Q492 316 476 322 Q464 328 450 348 Z" fill="url(#heartGrad)" stroke="#ff6b8a" stroke-width="1.3" filter="url(#organGlow)" opacity="0.95"/>
+          <!-- Aorta stub -->
+          <path d="M450 322 Q446 310 442 300 Q440 295 448 294 Q456 293 458 300 Q456 310 454 322" stroke="#cc2244" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- Pulmonary artery -->
+          <path d="M444 318 Q436 308 428 302" stroke="#cc2244" stroke-width="1.5" fill="none" opacity="0.7" stroke-linecap="round"/>
+          <!-- Heart highlight -->
+          <ellipse cx="438" cy="338" rx="10" ry="7" fill="rgba(255,180,200,0.25)" transform="rotate(-20,438,338)"/>
+          <!-- Ventricle crease -->
+          <line x1="450" y1="348" x2="450" y2="400" stroke="rgba(180,30,60,0.4)" stroke-width="1" stroke-dasharray="2,3"/>
+          <!-- Click label -->
+          <rect x="250" y="338" width="66" height="22" rx="6" fill="rgba(255,107,138,0.12)" stroke="rgba(255,107,138,0.35)" stroke-width="0.8"/>
+          <text x="283" y="353" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff6b8a" letter-spacing="0.06em">HEART</text>
+          <line x1="316" y1="349" x2="400" y2="349" stroke="rgba(255,107,138,0.3)" stroke-width="0.8" stroke-dasharray="3,3"/>
+        </g>
+
+        <!-- ═══ LIVER ═══ -->
+        <g id="liver-group" class="organ-clickable" onclick="window.location.href='index_liver.html'">
+          <path class="organ-shape" d="M456 408 Q432 402 412 410 Q394 420 390 438 Q388 456 398 466 Q410 476 430 477 Q452 478 468 470 Q486 460 490 442 Q494 424 484 412 Q474 404 456 408 Z" fill="url(#liverGrad)" stroke="#fbbf24" stroke-width="1.1" opacity="0.9" filter="url(#organGlow)"/>
+          <!-- Liver lobes divide -->
+          <path d="M444 410 Q444 440 444 475" stroke="rgba(180,120,0,0.45)" stroke-width="1" fill="none" stroke-dasharray="2,3"/>
+          <!-- Portal vein hint -->
+          <path d="M430 476 Q435 490 438 502" stroke="#d4900a" stroke-width="1.4" fill="none" opacity="0.6" stroke-linecap="round"/>
+          <!-- Gallbladder -->
+          <ellipse cx="466" cy="472" rx="10" ry="7" fill="#5aab6a" opacity="0.7" stroke="#3d8f50" stroke-width="0.8"/>
+          <!-- Click label -->
+          <rect x="516" y="430" width="64" height="22" rx="6" fill="rgba(251,191,36,0.12)" stroke="rgba(251,191,36,0.35)" stroke-width="0.8"/>
+          <text x="548" y="445" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#fbbf24" letter-spacing="0.06em">LIVER</text>
+          <line x1="516" y1="441" x2="490" y2="445" stroke="rgba(251,191,36,0.3)" stroke-width="0.8" stroke-dasharray="3,3"/>
+        </g>
+
+        <!-- ═══ KIDNEYS ═══ -->
+        <!-- Left kidney -->
+        <g id="kidney-left-group" class="organ-clickable" onclick="window.location.href='index_kidney.html'">
+          <path class="organ-shape" d="M406 430 Q394 430 388 440 Q382 452 386 466 Q390 480 402 486 Q414 490 422 482 Q430 472 430 458 Q430 444 422 436 Q416 430 406 430 Z" fill="url(#kidneyGrad)" stroke="#a78bfa" stroke-width="1.1" opacity="0.9" filter="url(#organGlow)"/>
+          <!-- Renal pelvis -->
+          <path d="M422 456 Q428 458 434 460" stroke="#8855d4" stroke-width="1.2" fill="none" opacity="0.7" stroke-linecap="round"/>
+          <!-- Ureter left -->
+          <path d="M424 460 Q426 476 424 496 Q422 510 420 520" stroke="#7a46c8" stroke-width="1" fill="none" opacity="0.55" stroke-linecap="round"/>
+          <!-- Cortex highlight -->
+          <path d="M392 444 Q390 456 394 468" stroke="rgba(210,180,255,0.35)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- Right kidney -->
+        <g id="kidney-right-group" class="organ-clickable" onclick="window.location.href='index_kidney.html'">
+          <path class="organ-shape" d="M494 430 Q506 430 512 440 Q518 452 514 466 Q510 480 498 486 Q486 490 478 482 Q470 472 470 458 Q470 444 478 436 Q484 430 494 430 Z" fill="url(#kidneyGrad)" stroke="#a78bfa" stroke-width="1.1" opacity="0.9" filter="url(#organGlow)"/>
+          <!-- Renal pelvis -->
+          <path d="M478 456 Q472 458 466 460" stroke="#8855d4" stroke-width="1.2" fill="none" opacity="0.7" stroke-linecap="round"/>
+          <!-- Ureter right -->
+          <path d="M476 460 Q474 476 476 496 Q478 510 480 520" stroke="#7a46c8" stroke-width="1" fill="none" opacity="0.55" stroke-linecap="round"/>
+          <!-- Cortex highlight -->
+          <path d="M508 444 Q510 456 506 468" stroke="rgba(210,180,255,0.35)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- Kidney label -->
+        <g class="organ-clickable" onclick="window.location.href='index_kidney.html'">
+          <rect x="246" y="448" width="74" height="22" rx="6" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.35)" stroke-width="0.8"/>
+          <text x="283" y="463" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#a78bfa" letter-spacing="0.06em">KIDNEY</text>
+          <line x1="320" y1="459" x2="386" y2="458" stroke="rgba(167,139,250,0.3)" stroke-width="0.8" stroke-dasharray="3,3"/>
+        </g>
+
+        <!-- ═══ SPINE HINT ═══ -->
+        <g opacity="0.08" fill="rgba(56,182,255,0.5)" stroke="none">
+          <rect x="446" y="240" width="8" height="10" rx="2"/>
+          <rect x="446" y="254" width="8" height="10" rx="2"/>
+          <rect x="446" y="268" width="8" height="10" rx="2"/>
+          <rect x="446" y="282" width="8" height="10" rx="2"/>
+          <rect x="446" y="296" width="8" height="10" rx="2"/>
+          <rect x="446" y="310" width="8" height="10" rx="2"/>
+          <rect x="446" y="324" width="8" height="10" rx="2"/>
+          <rect x="446" y="488" width="8" height="10" rx="2"/>
+          <rect x="446" y="502" width="8" height="10" rx="2"/>
+        </g>
+
+        <!-- ═══ FACIAL FEATURES (subtle) ═══ -->
+        <ellipse cx="436" cy="106" rx="6" ry="7" fill="rgba(56,182,255,0.08)"/>
+        <ellipse cx="464" cy="106" rx="6" ry="7" fill="rgba(56,182,255,0.08)"/>
+        <path d="M438 130 Q450 136 462 130" stroke="rgba(56,182,255,0.12)" stroke-width="1" fill="none"/>
+        <!-- Nose -->
+        <path d="M448 120 Q446 127 448 130 Q450 132 452 130 Q454 127 452 120" stroke="rgba(56,182,255,0.1)" stroke-width="0.8" fill="none"/>
+
+        <!-- ═══ BLOOD VESSELS HINT ═══ -->
+        <!-- Jugular vein -->
+        <path d="M444 182 Q440 200 438 226" stroke="rgba(80,130,220,0.15)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M456 182 Q460 200 462 226" stroke="rgba(200,50,70,0.12)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- Descending aorta -->
+        <path d="M452 300 Q451 360 452 430 Q452 460 452 490" stroke="rgba(200,50,70,0.12)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Inferior vena cava -->
+        <path d="M456 300 Q457 360 456 430 Q456 460 456 490" stroke="rgba(80,130,220,0.1)" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+        <!-- ═══ INTERACTION HINT TEXT ═══ -->
+        <text x="450" y="758" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="rgba(107,138,170,0.8)" letter-spacing="0.04em">Click any organ to open its diagnostic module</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ORGAN CARDS -->
+  <section class="organs-section" id="organs">
+    <div class="section-label">Diagnostic Modules</div>
+    <h2 class="section-title">Five organs. One platform.</h2>
+    <p class="section-sub">Each module is powered by a trained machine learning model specific to that organ's disease pattern.</p>
+
+    <div class="organs-grid">
+
+      <a href="index_heart.html" class="organ-card" data-organ="heart">
+        <span class="card-icon">❤️</span>
+        <div class="card-name">Heart</div>
+        <p class="card-desc">The heart beats over 100,000 times a day, pumping 5 litres of blood per minute. Cardiovascular disease remains the world's leading cause of death. Early risk detection can prevent fatal events like heart attacks and cardiac arrest.</p>
+        <span class="card-action">Run Heart Analysis →</span>
+      </a>
+
+      <a href="index_lung.html" class="organ-card" data-organ="lung">
+        <span class="card-icon">🫁</span>
+        <div class="card-name">Lungs</div>
+        <p class="card-desc">Your lungs exchange oxygen and CO₂ with every breath — around 22,000 breaths daily. Lung cancer is the leading cancer killer globally. Screening through lifestyle and symptom data enables far earlier detection.</p>
+        <span class="card-action">Run Lung Analysis →</span>
+      </a>
+
+      <a href="index_kidney.html" class="organ-card" data-organ="kidney">
+        <span class="card-icon">🫘</span>
+        <div class="card-name">Kidney</div>
+        <p class="card-desc">Kidneys filter 200 litres of blood daily, removing waste and regulating pressure. Chronic kidney disease often progresses silently until advanced stages. Biochemical markers caught early can halt progression.</p>
+        <span class="card-action">Run Kidney Analysis →</span>
+      </a>
+
+      <a href="index_liver.html" class="organ-card" data-organ="liver">
+        <span class="card-icon">🟡</span>
+        <div class="card-name">Liver</div>
+        <p class="card-desc">The liver performs over 500 functions — from detoxification to protein synthesis. Liver disease often goes unnoticed until irreversible damage occurs. Enzyme markers and patient data reveal risk before symptoms emerge.</p>
+        <span class="card-action">Run Liver Analysis →</span>
+      </a>
+
+      <a href="index_brain.html" class="organ-card" data-organ="brain">
+        <span class="card-icon">🧠</span>
+        <div class="card-name">Brain</div>
+        <p class="card-desc">The brain controls every system in the body through 86 billion neurons. Stroke is a leading cause of death and long-term disability. Predictive modelling of risk factors — blood pressure, cholesterol, age — can save lives.</p>
+        <span class="card-action">Run Brain Analysis →</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- WHY HEALTHCARE -->
+  <section class="why-section">
+    <div class="section-label">Why It Matters</div>
+    <div class="why-grid">
+      <div class="why-text">
+        <h3>Preventive care is the future of medicine.</h3>
+        <p>Traditional healthcare is reactive — it waits for symptoms to manifest. By that point, disease may have progressed beyond the window for optimal treatment.</p>
+        <p>VitalSense shifts the paradigm. By analysing your clinical inputs against trained disease models, we surface risk before it becomes reality — giving you and your physician time to act.</p>
+        <ul class="feature-list">
+          <li>Machine learning models trained on clinical datasets for each organ</li>
+          <li>Covers the five organs responsible for the majority of global disease burden</li>
+          <li>Instant results — no lab wait times or specialist referrals needed</li>
+          <li>Designed as a screening tool to complement professional healthcare</li>
+          <li>Clean, interpretable outputs that help patients understand their own health</li>
+        </ul>
+      </div>
+
+      <div class="why-visual">
+        <div style="font-size:0.75rem;letter-spacing:0.08em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:0.5rem;">LIVE VITALS DEMO</div>
+
+        <div class="vitals-row">
+          <div class="vital-icon">❤️</div>
+          <div class="vital-info">
+            <div class="vital-name">HEART RATE</div>
+            <div class="vital-val" style="color:var(--heart)">72 bpm</div>
+            <div class="vital-bar"><div class="vital-fill" style="width:60%;background:var(--heart)"></div></div>
+          </div>
+        </div>
+
+        <div class="vitals-row">
+          <div class="vital-icon">🫁</div>
+          <div class="vital-info">
+            <div class="vital-name">OXYGEN SATURATION</div>
+            <div class="vital-val" style="color:var(--lung)">98%</div>
+            <div class="vital-bar"><div class="vital-fill" style="width:98%;background:var(--lung)"></div></div>
+          </div>
+        </div>
+
+        <div class="vitals-row">
+          <div class="vital-icon">🫘</div>
+          <div class="vital-info">
+            <div class="vital-name">CREATININE LEVEL</div>
+            <div class="vital-val" style="color:var(--kidney)">0.9 mg/dL</div>
+            <div class="vital-bar"><div class="vital-fill" style="width:40%;background:var(--kidney)"></div></div>
+          </div>
+        </div>
+
+        <div class="vitals-row">
+          <div class="vital-icon">🟡</div>
+          <div class="vital-info">
+            <div class="vital-name">ALT ENZYME</div>
+            <div class="vital-val" style="color:var(--liver)">28 U/L</div>
+            <div class="vital-bar"><div class="vital-fill" style="width:35%;background:var(--liver)"></div></div>
+          </div>
+        </div>
+
+        <div class="vitals-row">
+          <div class="vital-icon">🧠</div>
+          <div class="vital-info">
+            <div class="vital-name">SYSTOLIC PRESSURE</div>
+            <div class="vital-val" style="color:var(--brain)">118 mmHg</div>
+            <div class="vital-bar"><div class="vital-fill" style="width:55%;background:var(--brain)"></div></div>
+          </div>
+        </div>
+
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem;font-family:'DM Mono',monospace;text-align:center;letter-spacing:0.04em;">
+          All values nominal — illustrative only
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">VitalSense</div>
+    <div class="footer-note">
+      For educational and research purposes only. Not a substitute for professional medical advice.
+    </div>
+  </footer>
+
+  <!-- TOOLTIP -->
+  <div class="organ-tooltip" id="tooltip">
+    <div class="tt-name" id="tt-name"></div>
+    <div class="tt-desc" id="tt-desc"></div>
+    <div class="tt-cta" id="tt-cta"></div>
+  </div>
+
+  <script>
+    // Tooltip for biological SVG organs
+    const tooltip = document.getElementById('tooltip');
+    const ttName = document.getElementById('tt-name');
+    const ttDesc = document.getElementById('tt-desc');
+    const ttCta  = document.getElementById('tt-cta');
+
+    const organData = {
+      brain:  { color: '#00e5c5', name: 'Brain & Stroke',   desc: 'Assess stroke & neurological risk factors using key biomarkers.' },
+      heart:  { color: '#ff6b8a', name: 'Heart Disease',    desc: 'Evaluate cardiovascular risk with clinical input markers.' },
+      lung:   { color: '#38b6ff', name: 'Lung Cancer',      desc: 'Screen for lung cancer risk using survey-based features.' },
+      liver:  { color: '#fbbf24', name: 'Liver Disease',    desc: 'Detect early liver disease signals through biochemical data.' },
+      kidney: { color: '#a78bfa', name: 'Kidney Disease',   desc: 'Identify chronic kidney disease risk from diagnostic values.' },
+    };
+
+    const svgGroups = [
+      { id: 'brain-group',        organ: 'brain'  },
+      { id: 'heart-group',        organ: 'heart'  },
+      { id: 'lung-left-group',    organ: 'lung'   },
+      { id: 'lung-right-group',   organ: 'lung'   },
+      { id: 'liver-group',        organ: 'liver'  },
+      { id: 'kidney-left-group',  organ: 'kidney' },
+      { id: 'kidney-right-group', organ: 'kidney' },
+    ];
+
+    svgGroups.forEach(({ id, organ }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('mouseenter', e => {
+        const d = organData[organ];
+        ttName.textContent = d.name;
+        ttName.style.color = d.color;
+        ttDesc.textContent = d.desc;
+        ttCta.textContent  = '→ Open Diagnostic Tool';
+        ttCta.style.color  = d.color;
+        tooltip.classList.add('visible');
+      });
+      el.addEventListener('mousemove', e => {
+        tooltip.style.left = (e.clientX + 16) + 'px';
+        tooltip.style.top  = (e.clientY - 10) + 'px';
+      });
+      el.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // Intersection observer for scroll fade-in on cards
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.organ-card, .stat-item, .vitals-row').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>

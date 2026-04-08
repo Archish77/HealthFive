@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Lung Cancer Risk Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4338ca;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --accent: #8b5cf6;
+            --secondary: #0f0e17;
+            --muted: #6b7280;
+            --bg: #f5f3ff;
+            --bg2: #ede9fe;
+            --white: #ffffff;
+            --border: #c4b5fd;
+            --card-shadow: 0 4px 32px rgba(99, 102, 241, 0.10);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg);
+            color: var(--secondary);
+            min-height: 100vh;
+        }
+
+        nav {
+            background: var(--white);
+            padding: 1rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(99,102,241,0.07);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+        }
+
+        .nav-badge {
+            font-size: 0.72rem;
+            font-family: 'DM Mono', monospace;
+            background: var(--bg2);
+            color: var(--primary-dark);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 440px 1fr;
+            gap: 28px;
+            max-width: 1400px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        .prediction-card {
+            background: var(--white);
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+            height: fit-content;
+            position: sticky;
+            top: 88px;
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--secondary);
+            letter-spacing: -0.3px;
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .form-section-label {
+            font-size: 0.7rem;
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--primary-dark);
+            margin: 18px 0 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--bg2);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .full-width { grid-column: span 2; }
+
+        input, select {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            font-size: 13px;
+            font-family: 'Sora', sans-serif;
+            width: 100%;
+            background: var(--bg);
+            color: var(--secondary);
+            transition: border 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: var(--white);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        label span {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 400;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        button {
+            margin-top: 18px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+            letter-spacing: 0.2px;
+        }
+
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.45); }
+        button:active { transform: translateY(0); }
+
+        #result {
+            margin-top: 16px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+
+        .healthy { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; display: block; }
+        .risk { background: #ffe4e6; color: #9f1239; border: 1.5px solid #fda4af; display: block; }
+
+        .result-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        .result-confidence { font-family: 'DM Mono', monospace; font-size: 0.78rem; margin-top: 4px; opacity: 0.75; }
+
+        .info-section {
+            background: var(--white);
+            padding: 36px 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+        }
+
+        .info-hero h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--secondary);
+            line-height: 1.2;
+        }
+
+        .info-hero h1 span { color: var(--primary-dark); }
+
+        .info-hero p {
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin-top: 10px;
+            line-height: 1.6;
+            max-width: 560px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin: 24px 0;
+        }
+
+        .stat-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+
+        .section-title {
+            font-size: 0.72rem;
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary-dark);
+            margin: 32px 0 14px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid var(--bg2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px; height: 14px;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 2px;
+            display: inline-block;
+        }
+
+        .info-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .info-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 3px 0 0 3px;
+        }
+
+        .info-card:hover { box-shadow: 0 4px 20px rgba(99,102,241,0.14); border-color: var(--primary); }
+        .info-card.full { grid-column: span 2; }
+
+        .term { font-weight: 700; color: var(--secondary); font-size: 0.95rem; margin-bottom: 2px; }
+        .meaning { display: block; font-size: 0.78rem; color: var(--primary-dark); font-style: italic; margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+        .details { font-size: 0.85rem; line-height: 1.55; color: #374151; }
+
+        .badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-family: 'DM Mono', monospace; font-weight: 500; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-yellow { background: #fef9c3; color: #713f12; }
+        .badge-red { background: #ffe4e6; color: #9f1239; }
+
+        .callout {
+            background: linear-gradient(135deg, var(--primary-glow), rgba(139,92,246,0.06));
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-top: 24px;
+        }
+
+        .callout h4 { color: var(--primary-dark); font-size: 0.9rem; margin-bottom: 10px; }
+
+        .callout ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px; }
+        .callout ul li { font-size: 0.83rem; color: #374151; display: flex; align-items: center; gap: 6px; }
+        .callout ul li::before { content: '→'; color: var(--primary-dark); font-weight: 700; }
+
+        .disclaimer {
+            margin-top: 28px;
+            padding: 14px 18px;
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #713f12;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+            .prediction-card { position: relative; top: 0; }
+        }
+
+        @media (max-width: 640px) {
+            .info-cards-grid { grid-template-columns: 1fr; }
+            .info-card.full { grid-column: span 1; }
+            .callout ul { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr; }
+            .info-section { padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <div class="logo-icon">🫁</div>
+        Lung Health Dashboard
+    </div>
+    
+</nav>
+
+<div class="dashboard-container">
+
+    <!-- PREDICTION CARD -->
+    <div class="prediction-card">
+        <div class="card-header">
+            <h2>Risk Analysis</h2>
+        </div>
+        <p class="card-subtitle">Enter patient data below for instant AI-powered lung cancer risk prediction.</p>
+
+        <div class="form-section-label">Demographics</div>
+        <div class="grid">
+            <label>
+                <span>Age (years)</span>
+                <input id="age" type="number" placeholder="e.g. 55" min="1" max="120">
+            </label>
+            <label>
+                <span>Gender</span>
+                <select id="gender">
+                    <option value="">Select</option>
+                    <option value="1">Male</option>
+                    <option value="0">Female</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="form-section-label">Lifestyle Factors</div>
+        <div class="grid">
+            <label>
+                <span>Smoking</span>
+                <select id="smoking">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Alcohol Consuming</span>
+                <select id="alcohol_consuming">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Peer Pressure</span>
+                <select id="peer_pressure">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Yellow Fingers</span>
+                <select id="yellow_fingers">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="form-section-label">Symptoms</div>
+        <div class="grid">
+            <label>
+                <span>Anxiety</span>
+                <select id="anxiety">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Chronic Disease</span>
+                <select id="chronic_disease">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Fatigue</span>
+                <select id="fatigue">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Allergy</span>
+                <select id="allergy">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Wheezing</span>
+                <select id="wheezing">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Coughing</span>
+                <select id="coughing">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Shortness of Breath</span>
+                <select id="shortness_of_breath">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label>
+                <span>Swallowing Difficulty</span>
+                <select id="swallowing_difficulty">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+            <label class="full-width">
+                <span>Chest Pain</span>
+                <select id="chest_pain">
+                    <option value="">Select</option>
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                </select>
+            </label>
+        </div>
+
+        <button onclick="predict()">🔍 Run AI Diagnostics</button>
+        <div id="result"></div>
+    </div>
+
+    <!-- INFO SECTION -->
+    <div class="info-section">
+        <div class="info-hero">
+            <h1>Understanding <span>Lung Cancer</span><br>Risk Parameters</h1>
+            <p>This guide explains each clinical and lifestyle metric used by the AI model to evaluate your risk of Lung Cancer. Early detection through pattern recognition of symptoms and lifestyle factors dramatically improves outcomes.</p>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-num">1.8M</div>
+                <div class="stat-label">Lung cancer deaths/year globally</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">85%</div>
+                <div class="stat-label">Cases linked to smoking</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">5x</div>
+                <div class="stat-label">Better survival if caught early</div>
+            </div>
+        </div>
+
+        <div class="section-title">Demographics</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Age</div>
+                <span class="meaning">Primary demographic risk factor</span>
+                <p class="details">Lung cancer risk increases significantly with age. Most diagnoses occur after age 65, as decades of cellular exposure to carcinogens accumulate. However, younger smokers and those with chronic disease exposure can also show elevated risk profiles in the model.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Lower risk: &lt;45</span>
+                    <span class="badge badge-yellow">Moderate: 45–65</span>
+                    <span class="badge badge-red">Higher risk: 65+</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Gender</div>
+                <span class="meaning">Biological sex at birth</span>
+                <p class="details">Men have historically had higher lung cancer rates due to greater smoking prevalence, but the gender gap is narrowing. Women exposed to smoking are more susceptible to lung adenocarcinoma and may develop the disease at lower cumulative tobacco doses than men.</p>
+            </div>
+        </div>
+
+        <div class="section-title">Lifestyle Factors</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Smoking</div>
+                <span class="meaning">Tobacco smoking status</span>
+                <p class="details">Smoking is the single largest risk factor for lung cancer, responsible for approximately 85% of all cases. Cigarette smoke contains over 70 known carcinogens that directly damage DNA in lung cells. Even light or occasional smoking significantly elevates lifetime risk compared to non-smokers.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Non-smoker — Low baseline risk</span>
+                    <span class="badge badge-red">Smoker — Dominant risk factor</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Alcohol Consuming</div>
+                <span class="meaning">Regular alcohol intake</span>
+                <p class="details">Chronic alcohol use compounds lung cancer risk, especially in smokers. Alcohol may enhance the carcinogenic effects of tobacco by impairing the body's ability to metabolize and detoxify cancer-causing chemicals. Heavy drinkers who smoke face a multiplicative, not just additive, risk increase.</p>
+            </div>
+            <div class="info-card">
+                <div class="term">Peer Pressure</div>
+                <span class="meaning">Social influence on smoking behaviour</span>
+                <p class="details">Peer pressure is a documented gateway to smoking initiation, particularly in younger individuals. The model uses this as an indirect lifestyle indicator — individuals who began smoking due to social influences tend to have longer smoking histories and reduced likelihood of quitting successfully.</p>
+            </div>
+            <div class="info-card">
+                <div class="term">Yellow Fingers</div>
+                <span class="meaning">Nicotine staining on fingertips</span>
+                <p class="details">Yellow or stained fingers are a physical marker of heavy, long-term tobacco use. The nicotine and tar deposits that cause discoloration indicate chronic, high-volume smoking — a direct proxy for cumulative carcinogen exposure. This sign correlates strongly with lung cancer diagnosis in the dataset.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Absent — No staining</span>
+                    <span class="badge badge-red">Present — Heavy tobacco use indicator</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Symptoms & Medical Indicators</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Anxiety</div>
+                <span class="meaning">Presence of anxiety symptoms</span>
+                <p class="details">Anxiety is both a symptom and a consequence of lung disease. Chronic respiratory conditions cause oxygen deficiency and breathlessness that triggers anxiety responses. It is also associated with smoking as a coping behaviour. The model uses anxiety as a psychosomatic flag correlated with respiratory illness burden.</p>
+            </div>
+            <div class="info-card">
+                <div class="term">Chronic Disease</div>
+                <span class="meaning">Presence of existing chronic illness</span>
+                <p class="details">Pre-existing chronic conditions — particularly COPD, emphysema, and chronic bronchitis — dramatically elevate lung cancer risk. These conditions share etiological roots with lung cancer and create an inflamed, damaged lung microenvironment that is more susceptible to malignant transformation.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">None — Lower risk</span>
+                    <span class="badge badge-red">Present — Elevated risk</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Fatigue</div>
+                <span class="meaning">Persistent unexplained tiredness</span>
+                <p class="details">Unexplained, persistent fatigue is one of the most common early warning signs of lung cancer. Tumors consume significant metabolic energy, and the immune response to malignancy causes systemic exhaustion. Fatigue combined with other respiratory symptoms is a key cluster the model identifies as high-risk.</p>
+            </div>
+            <div class="info-card">
+                <div class="term">Allergy</div>
+                <span class="meaning">Presence of allergic reactions</span>
+                <p class="details">Allergies can cause chronic airway inflammation that shares pathological features with early-stage lung disease. Additionally, certain environmental allergens that trigger allergic responses may also be directly carcinogenic. Allergy presence is a moderate-weight feature in the predictive model.</p>
+            </div>
+            <div class="info-card">
+                <div class="term">Wheezing</div>
+                <span class="meaning">Audible whistling sound during breathing</span>
+                <p class="details">Wheezing indicates airway narrowing or obstruction — a hallmark of lung pathology. In a lung cancer context, wheezing can result from a tumor partially blocking a bronchus. When it appears in a smoker or older adult without an asthma history, it is a red-flag symptom warranting immediate investigation.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Absent — Normal airway</span>
+                    <span class="badge badge-red">Present — Possible obstruction</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Coughing</div>
+                <span class="meaning">Persistent or chronic cough</span>
+                <p class="details">A chronic cough — especially one that changes in character, produces blood-tinged sputum, or doesn't respond to standard treatment — is the most common presenting symptom of lung cancer. Smokers often dismiss it as "smoker's cough," leading to dangerous diagnostic delays. The model weighs persistent coughing heavily.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Absent or transient</span>
+                    <span class="badge badge-red">Persistent — Investigate urgently</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Shortness of Breath</div>
+                <span class="meaning">Dyspnea — difficulty breathing</span>
+                <p class="details">Dyspnea in lung cancer arises from multiple causes: tumor compression of airways, pleural effusion (fluid around the lungs), reduced lung function from cancer invasion, or anemia from blood loss. It is a significant symptom at both early and advanced stages and is heavily weighted by the predictive model.</p>
+            </div>
+            <div class="info-card">
+                <div class="term">Swallowing Difficulty</div>
+                <span class="meaning">Dysphagia — trouble swallowing</span>
+                <p class="details">Difficulty swallowing can indicate that a lung tumor has grown large enough to compress the esophagus, or that cancer has spread to mediastinal lymph nodes. While not a common early symptom, its presence alongside other respiratory symptoms is a strong indicator of advanced disease in the model's feature set.</p>
+            </div>
+            <div class="info-card full">
+                <div class="term">Chest Pain</div>
+                <span class="meaning">Persistent or pleuritic chest discomfort</span>
+                <p class="details">Chest pain in lung cancer may be dull and persistent (from tumor growth involving the chest wall or pleura) or sharp and worsened by breathing (pleuritic). It frequently indicates that the tumor has extended beyond lung tissue itself. Chest pain combined with coughing, shortness of breath, and a smoking history is one of the highest-risk symptom combinations the model evaluates.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Absent — Lower suspicion</span>
+                    <span class="badge badge-red">Present — High-priority flag</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout">
+            <h4>⚠️ High-Risk Combinations to Watch</h4>
+            <ul>
+                <li>Smoking + Yellow Fingers</li>
+                <li>Coughing + Chest Pain</li>
+                <li>Shortness of Breath + Wheezing</li>
+                <li>Chronic Disease + Smoking</li>
+                <li>Fatigue + Swallowing Difficulty</li>
+                <li>Alcohol + Smoking + Age 65+</li>
+            </ul>
+        </div>
+
+        <div class="disclaimer">
+            ⚠️ <strong>Medical Disclaimer:</strong> This tool is for educational and informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified pulmonologist or oncologist for any respiratory health concerns.
+        </div>
+    </div>
+</div>
+
+<script>
+    function predict() {
+        const resultDiv = document.getElementById('result');
+
+        const fields = {
+            GENDER: document.getElementById('gender').value,
+            AGE: document.getElementById('age').value,
+            SMOKING: document.getElementById('smoking').value,
+            YELLOW_FINGERS: document.getElementById('yellow_fingers').value,
+            ANXIETY: document.getElementById('anxiety').value,
+            PEER_PRESSURE: document.getElementById('peer_pressure').value,
+            'CHRONIC DISEASE': document.getElementById('chronic_disease').value,
+            'FATIGUE ': document.getElementById('fatigue').value,
+            'ALLERGY ': document.getElementById('allergy').value,
+            WHEEZING: document.getElementById('wheezing').value,
+            'ALCOHOL CONSUMING': document.getElementById('alcohol_consuming').value,
+            COUGHING: document.getElementById('coughing').value,
+            'SHORTNESS OF BREATH': document.getElementById('shortness_of_breath').value,
+            'SWALLOWING DIFFICULTY': document.getElementById('swallowing_difficulty').value,
+            'CHEST PAIN': document.getElementById('chest_pain').value,
+        };
+
+        for (const [key, val] of Object.entries(fields)) {
+            if (val === '' || val === null) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'risk';
+                resultDiv.innerHTML = `<span class="result-icon">⚠️</span>Please fill in all fields before running diagnostics.`;
+                return;
+            }
+        }
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = '';
+        resultDiv.innerHTML = `<span class="result-icon">⏳</span>Analyzing data...`;
+
+        fetch("/predict_lung", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields)
+        })
+        .then(res => res.json())
+        .then(data => {
+            const isRisk = data.prediction === 1 || String(data.prediction).toLowerCase().includes("yes");
+            resultDiv.className = isRisk ? 'risk' : 'healthy';
+            resultDiv.innerHTML = isRisk
+                ? `<span class="result-icon">🔴</span><strong>High Risk Detected</strong><br>Lung cancer risk identified. Please consult a pulmonologist immediately.<div class="result-confidence">Confidence: ${data.confidence}%</div>`
+                : `<span class="result-icon">🟢</span><strong>Low Risk</strong><br>No significant lung cancer risk detected at this time.<div class="result-confidence">Confidence: ${data.confidence}%</div>`;
+        })
+        .catch(err => {
+            resultDiv.className = 'risk';
+            resultDiv.innerHTML = `<span class="result-icon">❌</span>Error connecting to server. Make sure the Flask backend is running.`;
+            console.error(err);
+        });
+    }
+</script>
+
+</body>
+</html>

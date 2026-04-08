@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Kidney Health Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0369a1;
+            --primary-glow: rgba(14, 165, 233, 0.18);
+            --accent: #06b6d4;
+            --secondary: #0f172a;
+            --muted: #64748b;
+            --success: #10b981;
+            --danger: #f43f5e;
+            --bg: #f0f9ff;
+            --bg2: #e0f2fe;
+            --white: #ffffff;
+            --border: #bae6fd;
+            --card-shadow: 0 4px 32px rgba(14, 165, 233, 0.10);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg);
+            color: var(--secondary);
+            min-height: 100vh;
+        }
+
+        nav {
+            background: var(--white);
+            padding: 1rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(14,165,233,0.07);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(14,165,233,0.3);
+        }
+
+        .nav-badge {
+            font-size: 0.72rem;
+            font-family: 'DM Mono', monospace;
+            background: var(--bg2);
+            color: var(--primary-dark);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 440px 1fr;
+            gap: 28px;
+            max-width: 1400px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        .prediction-card {
+            background: var(--white);
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+            height: fit-content;
+            position: sticky;
+            top: 88px;
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--secondary);
+            letter-spacing: -0.3px;
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .form-section-label {
+            font-size: 0.7rem;
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin: 18px 0 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--bg2);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .full-width { grid-column: span 2; }
+
+        input, select {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            font-size: 13px;
+            font-family: 'Sora', sans-serif;
+            width: 100%;
+            background: var(--bg);
+            color: var(--secondary);
+            transition: border 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: var(--white);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230ea5e9' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        label span {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 400;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        button {
+            margin-top: 18px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 16px rgba(14,165,233,0.35);
+            letter-spacing: 0.2px;
+        }
+
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.4); }
+        button:active { transform: translateY(0); }
+
+        #result {
+            margin-top: 16px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+
+        .healthy { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; display: block; }
+        .risk { background: #ffe4e6; color: #9f1239; border: 1.5px solid #fda4af; display: block; }
+
+        .result-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        .result-confidence { font-family: 'DM Mono', monospace; font-size: 0.78rem; margin-top: 4px; opacity: 0.75; }
+
+        .info-section {
+            background: var(--white);
+            padding: 36px 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+        }
+
+        .info-hero h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--secondary);
+            line-height: 1.2;
+        }
+
+        .info-hero h1 span { color: var(--primary); }
+
+        .info-hero p {
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin-top: 10px;
+            line-height: 1.6;
+            max-width: 560px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin: 24px 0;
+        }
+
+        .stat-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+
+        .section-title {
+            font-size: 0.72rem;
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin: 32px 0 14px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid var(--bg2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px; height: 14px;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 2px;
+            display: inline-block;
+        }
+
+        .info-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .info-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 3px 0 0 3px;
+        }
+
+        .info-card:hover { box-shadow: 0 4px 20px rgba(14,165,233,0.12); border-color: var(--primary); }
+        .info-card.full { grid-column: span 2; }
+
+        .term { font-weight: 700; color: var(--secondary); font-size: 0.95rem; margin-bottom: 2px; }
+        .meaning { display: block; font-size: 0.78rem; color: var(--primary); font-style: italic; margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+        .details { font-size: 0.85rem; line-height: 1.55; color: #475569; }
+
+        .badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-family: 'DM Mono', monospace; font-weight: 500; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-yellow { background: #fef9c3; color: #713f12; }
+        .badge-red { background: #ffe4e6; color: #9f1239; }
+
+        .callout {
+            background: linear-gradient(135deg, var(--primary-glow), rgba(6,182,212,0.08));
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-top: 24px;
+        }
+
+        .callout h4 { color: var(--primary-dark); font-size: 0.9rem; margin-bottom: 10px; }
+
+        .callout ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px; }
+        .callout ul li { font-size: 0.83rem; color: #334155; display: flex; align-items: center; gap: 6px; }
+        .callout ul li::before { content: '→'; color: var(--primary); font-weight: 700; }
+
+        .disclaimer {
+            margin-top: 28px;
+            padding: 14px 18px;
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #713f12;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+            .prediction-card { position: relative; top: 0; }
+        }
+
+        @media (max-width: 640px) {
+            .info-cards-grid { grid-template-columns: 1fr; }
+            .info-card.full { grid-column: span 1; }
+            .callout ul { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr; }
+            .info-section { padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <div class="logo-icon">🫘</div>
+        Kidney Health Dashboard
+</nav>
+
+<div class="dashboard-container">
+
+    <!-- PREDICTION CARD -->
+    <div class="prediction-card">
+        <div class="card-header">
+            <h2>Risk Analysis</h2>
+        </div>
+        <p class="card-subtitle">Enter patient data below for instant AI-powered kidney disease prediction.</p>
+
+        <div class="form-section-label">Demographics</div>
+        <div class="grid">
+            <label>
+                <span>Age (years)</span>
+                <input id="age" type="number" placeholder="e.g. 45" min="1" max="120">
+            </label>
+            <label>
+                <span>Gender</span>
+                <select id="gender">
+                    <option value="">Select</option>
+                    <option value="1">Male</option>
+                    <option value="0">Female</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="form-section-label">Lifestyle Factors</div>
+        <div class="grid">
+            <label>
+                <span>Physical Activity</span>
+                <select id="physical_activity">
+                    <option value="">Select</option>
+                    <option value="0">Low</option>
+                    <option value="1">Moderate</option>
+                    <option value="2">High</option>
+                </select>
+            </label>
+            <label>
+                <span>Sitting Hours / day</span>
+                <input id="sitting_hours" type="number" placeholder="e.g. 6" min="0" max="24">
+            </label>
+            <label>
+                <span>Sleep Hours / night</span>
+                <input id="sleep_hours" type="number" placeholder="e.g. 7" min="0" max="24">
+            </label>
+            <label>
+                <span>Smoking</span>
+                <select id="smoking">
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </label>
+            <label class="full-width">
+                <span>Alcohol Consumption</span>
+                <select id="alcohol">
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="form-section-label">Diet & Hydration</div>
+        <div class="grid">
+            <label>
+                <span>Water Intake (Liters / day)</span>
+                <input id="water_intake" type="number" step="0.1" placeholder="e.g. 2.5" min="0" max="10">
+            </label>
+            <label>
+                <span>Urination Frequency / day</span>
+                <input id="urination_freq" type="number" placeholder="e.g. 7" min="0" max="20">
+            </label>
+            <label>
+                <span>Salt Intake Level</span>
+                <select id="salt_intake">
+                    <option value="">Select</option>
+                    <option value="0">Low</option>
+                    <option value="1">Medium</option>
+                    <option value="2">High</option>
+                </select>
+            </label>
+            <label>
+                <span>Protein Intake</span>
+                <select id="protein_intake">
+                    <option value="">Select</option>
+                    <option value="0">Normal</option>
+                    <option value="1">High</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="form-section-label">Medical History</div>
+        <div class="grid">
+            <label>
+                <span>Blood Pressure Level</span>
+                <select id="bp_level">
+                    <option value="">Select</option>
+                    <option value="0">Normal</option>
+                    <option value="1">High</option>
+                </select>
+            </label>
+            <label>
+                <span>Diabetes</span>
+                <select id="diabetes">
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </label>
+        </div>
+
+        <button onclick="predict()">🔍 Run AI Diagnostics</button>
+        <div id="result"></div>
+    </div>
+
+    <!-- INFO SECTION -->
+    <div class="info-section">
+        <div class="info-hero">
+            <h1>Understanding <span>Kidney Disease</span><br>Risk Parameters</h1>
+            <p>This guide explains each clinical and lifestyle metric used by the AI model to evaluate your risk of Chronic Kidney Disease (CKD). Knowledge of these factors empowers better health decisions.</p>
+        </div>
+
+        <div class="section-title">Demographics</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Age</div>
+                <span class="meaning">Primary demographic risk factor</span>
+                <p class="details">The risk of kidney disease increases significantly with age. After 60, the kidneys naturally lose about 1% of their filtering ability each year. Age is one of the strongest predictors in the model.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Low risk: &lt;40</span>
+                    <span class="badge badge-yellow">Moderate: 40–65</span>
+                    <span class="badge badge-red">Higher risk: 65+</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Gender</div>
+                <span class="meaning">Biological sex at birth</span>
+                <p class="details">Men have a slightly higher baseline risk of kidney disease due to differences in hormonal protection, muscle mass (which affects creatinine levels), and lifestyle patterns. However, diabetes-related CKD can affect women more severely.</p>
+            </div>
+        </div>
+
+        <div class="section-title">Lifestyle Factors</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Physical Activity Level</div>
+                <span class="meaning">Frequency & intensity of exercise</span>
+                <p class="details">Regular physical activity improves blood pressure, reduces obesity, and improves insulin sensitivity — all of which directly protect the kidneys. A sedentary lifestyle is an independent risk factor for CKD progression.</p>
+                <div class="badge-row">
+                    <span class="badge badge-red">Low — Sedentary</span>
+                    <span class="badge badge-yellow">Moderate — Some activity</span>
+                    <span class="badge badge-green">High — Regular exercise</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Sitting Hours per Day</div>
+                <span class="meaning">Total sedentary time daily</span>
+                <p class="details">Prolonged sitting independently raises risk of hypertension and metabolic syndrome. Studies show more than 8 hours of daily sitting is associated with elevated kidney stress markers even in physically active individuals.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Ideal: &lt;6 hrs</span>
+                    <span class="badge badge-red">Concern: &gt;8 hrs</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Sleep Hours</div>
+                <span class="meaning">Average nightly sleep duration</span>
+                <p class="details">The kidneys regulate the body's fluid and waste during sleep cycles. Both too little (&lt;6 hrs) and too much (&gt;9 hrs) sleep are associated with impaired kidney function and higher CKD risk over time.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Optimal: 7–8 hrs</span>
+                    <span class="badge badge-yellow">Borderline: 6 or 9 hrs</span>
+                    <span class="badge badge-red">Risk: &lt;6 or &gt;9 hrs</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Smoking</div>
+                <span class="meaning">Current or past tobacco use</span>
+                <p class="details">Smoking reduces blood flow to the kidneys by damaging blood vessels. It doubles the speed of kidney function decline in people with diabetes or hypertension and significantly increases risk of end-stage renal disease (ESRD).</p>
+            </div>
+            <div class="info-card full">
+                <div class="term">Alcohol Consumption</div>
+                <span class="meaning">Regular alcohol intake</span>
+                <p class="details">Chronic heavy alcohol use raises blood pressure, causes dehydration, and forces the kidneys to filter excess toxins. Even moderate regular drinking can contribute to kidney inflammation and disrupt the organ's ability to filter blood efficiently. It also interacts negatively with medications commonly used to manage kidney disease.</p>
+            </div>
+        </div>
+
+        <div class="section-title">Diet & Hydration</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Water Intake (Liters/day)</div>
+                <span class="meaning">Daily fluid consumption</span>
+                <p class="details">Adequate hydration keeps kidneys flushed and prevents crystallization of waste products (kidney stones). Low water intake concentrates urine and forces the kidneys to work harder. 2.5–3.5L is typically ideal for healthy adults.</p>
+                <div class="badge-row">
+                    <span class="badge badge-red">Risk: &lt;1.5L</span>
+                    <span class="badge badge-yellow">Borderline: 1.5–2L</span>
+                    <span class="badge badge-green">Optimal: 2.5–3.5L</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Urination Frequency</div>
+                <span class="meaning">Number of times urinating per day</span>
+                <p class="details">Normal urination frequency is 6–8 times per day. Very low frequency may suggest dehydration or reduced kidney output. Very high frequency can indicate diabetes, UTI, or early kidney dysfunction. The model uses this as a proxy indicator of kidney workload.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Normal: 6–8 times</span>
+                    <span class="badge badge-red">Abnormal: &lt;4 or &gt;10</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Salt Intake Level</div>
+                <span class="meaning">Dietary sodium consumption</span>
+                <p class="details">High sodium intake is one of the leading dietary contributors to kidney damage. Excess sodium causes the kidneys to retain water, raising blood pressure and forcing the glomeruli (filtering units) to work under higher pressure — gradually destroying them over time.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Low — Protective</span>
+                    <span class="badge badge-yellow">Medium — Moderate risk</span>
+                    <span class="badge badge-red">High — Harmful</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Protein Intake</div>
+                <span class="meaning">Dietary protein consumption level</span>
+                <p class="details">While protein is essential, excessive intake generates high levels of nitrogen waste products that the kidneys must filter. In people with existing kidney issues or diabetes, high protein diets can significantly accelerate kidney function decline.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Normal — Standard diet</span>
+                    <span class="badge badge-red">High — Elevated strain</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Medical History</div>
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="term">Blood Pressure Level</div>
+                <span class="meaning">Systemic blood pressure status</span>
+                <p class="details">Hypertension is the second leading cause of kidney failure worldwide. High blood pressure damages the small blood vessels in the kidneys, reducing their ability to filter waste. This creates a dangerous cycle — damaged kidneys raise blood pressure further, accelerating the damage.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">Normal (&lt;120/80 mmHg)</span>
+                    <span class="badge badge-red">High (≥130/80 mmHg)</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="term">Diabetes</div>
+                <span class="meaning">Type 1 or Type 2 diabetes diagnosis</span>
+                <p class="details">Diabetes is the single leading cause of kidney failure globally, responsible for roughly 40% of all cases. High blood sugar damages the glomeruli over years (diabetic nephropathy). The model weights this parameter heavily because uncontrolled diabetes dramatically accelerates kidney decline.</p>
+                <div class="badge-row">
+                    <span class="badge badge-green">No Diabetes — Lower risk</span>
+                    <span class="badge badge-red">Diabetic — Major risk factor</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout">
+            <h4>⚠️ High-Risk Combinations to Watch</h4>
+            <ul>
+                <li>Diabetes + High BP</li>
+                <li>High salt + Low water</li>
+                <li>Smoking + Alcohol</li>
+                <li>Sedentary + High sitting hours</li>
+                <li>Age 60+ + Diabetes</li>
+                <li>High protein + Low water</li>
+            </ul>
+        </div>
+
+        <div class="disclaimer">
+            ⚠️ <strong>Medical Disclaimer:</strong> This tool is for educational and informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for any health concerns.
+        </div>
+    </div>
+</div>
+
+<script>
+    function predict() {
+        const resultDiv = document.getElementById('result');
+
+        const fields = {
+            age: document.getElementById('age').value,
+            gender: document.getElementById('gender').value,
+            water_intake: document.getElementById('water_intake').value,
+            urination_freq: document.getElementById('urination_freq').value,
+            physical_activity: document.getElementById('physical_activity').value,
+            sitting_hours: document.getElementById('sitting_hours').value,
+            salt_intake: document.getElementById('salt_intake').value,
+            protein_intake: document.getElementById('protein_intake').value,
+            sleep_hours: document.getElementById('sleep_hours').value,
+            smoking: document.getElementById('smoking').value,
+            alcohol: document.getElementById('alcohol').value,
+            bp_level: document.getElementById('bp_level').value,
+            diabetes: document.getElementById('diabetes').value,
+        };
+
+        for (const [key, val] of Object.entries(fields)) {
+            if (val === '' || val === null) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'risk';
+                resultDiv.innerHTML = `<span class="result-icon">⚠️</span>Please fill in all fields before running diagnostics.`;
+                return;
+            }
+        }
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = '';
+        resultDiv.innerHTML = `<span class="result-icon">⏳</span>Analyzing data...`;
+
+        fetch("/predict_kidney", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields)
+        })
+        .then(res => res.json())
+        .then(data => {
+            const isRisk = data.prediction === 1 || String(data.prediction).toLowerCase().includes("yes");
+            resultDiv.className = isRisk ? 'risk' : 'healthy';
+            resultDiv.innerHTML = isRisk
+                ? `<span class="result-icon">🔴</span><strong>High Risk Detected</strong><br>Kidney disease risk identified. Please consult a nephrologist.<div class="result-confidence">Confidence: ${data.confidence}%</div>`
+                : `<span class="result-icon">🟢</span><strong>Low Risk</strong><br>No significant kidney disease risk detected at this time.<div class="result-confidence">Confidence: ${data.confidence}%</div>`;
+        })
+        .catch(err => {
+            resultDiv.className = 'risk';
+            resultDiv.innerHTML = `<span class="result-icon">❌</span>Error connecting to server. Make sure the Flask backend is running.`;
+            console.error(err);
+        });
+    }
+</script>
+
+</body>
+</html>
